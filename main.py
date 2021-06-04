@@ -16,13 +16,16 @@ bright_green = (0, 255, 0)
 obstacle_color = (180, 240, 90)
 
 carImg = pygame.image.load('plane.png')
+gameIcon = pygame.image.load('plane.png')
+pygame.display.set_icon(gameIcon)
 plane_width = 68  # depends of the imensions of the object used
 gameDisplay = pygame.display.set_mode((display_width, display_height))
 clock = pygame.time.Clock()
+pause = False
 
 
 def obstacles_dodged(count):
-    font = pygame.font.SysFont(None, '35')
+    font = pygame.font.SysFont('comicsansms', 35)
     text = font.render("Dodged: "+str(count), True, black)
     gameDisplay.blit(text, (0, 0))
 
@@ -42,7 +45,7 @@ def text_objects(text, font):
 
 
 def message_display(text):
-    largeText = pygame.font.Font('freesansbold.ttf', 115)
+    largeText = pygame.font.SysFont('comicsansms', 115)
     textSurf, textRect = text_objects(text, largeText)
     textRect.center = ((display_width/2), (display_height/2))
     gameDisplay.blit(textSurf, textRect)
@@ -55,15 +58,28 @@ def crash():
     message_display('You crashed!')
 
 
-def button(msg, x, y, w, h, inactive_col, active_col):
+def quitgame():
+    pygame.quit()
+    quit()
+
+
+def button(msg, x, y, w, h, inactive_col, active_col, action=None):
     mouse = pygame.mouse.get_pos()
+    click = pygame.mouse.get_pressed()
 
     if x + w > mouse[0] > x and y + h > mouse[1] > y:
         pygame.draw.rect(gameDisplay, active_col, (x, y, w, h))
+        if click[0] == 1 and action != None:
+            action()
+            # if action == "play":
+            #     game_loop()
+            # elif action == "quit":
+            #     pygame.quit()
+            #     quit()
     else:
         pygame.draw.rect(gameDisplay, inactive_col, (x, y, w, h))
 
-    smallText = pygame.font.Font("freesansbold.ttf", 20)
+    smallText = pygame.font.SysFont('comicsansms', 20)
     textSurf, textRect = text_objects(msg, smallText)
     textRect.center = ((x+(w/2)), (y+(h/2)))
     gameDisplay.blit(textSurf, textRect)
@@ -77,19 +93,45 @@ def game_intro():
                 pygame.quit()
                 quit()
         gameDisplay.fill(white)
-        largeText = pygame.font.Font('freesansbold.ttf', 115)
+        largeText = pygame.font.SysFont('comicsansms', 115)
         textSurf, textRect = text_objects("Race and Crash", largeText)
         textRect.center = ((display_width/2), (display_height/2))
         gameDisplay.blit(textSurf, textRect)
-        button("Start!", 150, 650, 100, 50, green, bright_green)
-        button("Quit!", 750, 650, 100, 50, red, bright_red)
+        button("Start!", 150, 650, 100, 50, green, bright_green, game_loop)
+        button("Quit!", 750, 650, 100, 50, red, bright_red, quitgame)
         pygame.display.update()
         clock.tick(15)
-        time.sleep(2)
-        intro = False
+        # time.sleep(2)
+        # intro = False
+
+
+def unpause():
+    global pause
+    pause = False
+
+
+def game_pause():
+    while pause:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                quit()
+        gameDisplay.fill(white)
+        largeText = pygame.font.SysFont('comicsansms', 115)
+        textSurf, textRect = text_objects("Paused", largeText)
+        textRect.center = ((display_width/2), (display_height/2))
+        gameDisplay.blit(textSurf, textRect)
+        button("Continue!", 150, 650, 100, 50,
+               green, bright_green, unpause)
+        button("Quit!", 750, 650, 100, 50, red, bright_red, quitgame)
+        pygame.display.update()
+        clock.tick(15)
+        # time.sleep(2)
+        # intro = False
 
 
 def game_loop():
+    global pause
     x = (display_width * 0.45)
     y = (display_height * 0.8)
 
@@ -121,6 +163,9 @@ def game_loop():
                     y_change = -5
                 elif event.key == pygame.K_DOWN:
                     y_change = 5
+                elif event.key == pygame.K_p:
+                    pause = True
+                    game_pause()
 
             if event.type == pygame.KEYUP:
                 if event.key == pygame.K_LEFT or event.key == pygame.K_RIGHT:
